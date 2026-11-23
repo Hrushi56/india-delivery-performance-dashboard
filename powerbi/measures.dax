@@ -1,0 +1,8 @@
+// Create each measure separately in the orders table.
+Eligible Orders = COUNTROWS(orders)
+
+Late Orders = COALESCE(CALCULATE([Eligible Orders], orders[days_late] > 0), 0)
+
+Late Rate = DIVIDE([Late Orders], [Eligible Orders])
+
+Average Days Late = CALCULATE(AVERAGE(orders[days_late]), orders[days_late] > 0)

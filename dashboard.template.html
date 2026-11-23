@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>India shipping performance</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f3eb;color:#163c37;font:16px/1.5 system-ui,sans-serif}main{max-width:950px;margin:auto;padding:40px 5%}h1{font:clamp(38px,6vw,64px)/1 Georgia,serif;margin:20px 0}label{display:inline-grid;margin:10px 16px 10px 0}select{font:inherit;padding:6px}#metrics{display:flex;flex-wrap:wrap;gap:28px;padding:20px 0;border-block:1px solid #98aba0}strong{display:block;font-size:28px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;background:white}td,th{padding:8px;text-align:right;border-bottom:1px solid #ddd}th:first-child,td:first-child{text-align:left}th{background:#174e44;color:#fff}small{display:block;margin-top:20px}
+</style><main><h1>India shipping performance</h1><p>Which destinations account for the most orders shipped beyond schedule?</p>
+<label>Destination state<select id="state"><option value="">All states</option></select></label>
+<label>Shipping mode<select id="mode"><option value="">All modes</option></select></label>
+<section id="metrics" aria-live="polite"></section><h2>Late orders by destination</h2>
+<div class="scroll"><table><thead><tr><th>State / territory</th><th>Orders</th><th>Late</th><th>Late rate</th><th>Avg. days late¹</th></tr></thead><tbody id="body"></tbody></table></div>
+<small>¹ Among late orders. Late means actual shipping days exceeded scheduled days. Destination names follow the historical source. DataCo Global, India subset · <a href="https://data.mendeley.com/datasets/8gx2fvg2k6/5">Source and attribution</a> · CC BY 4.0.</small></main>
+<script>
+const data=__DATA__;
+const el=id=>document.getElementById(id);
+for(const key of ['state','mode']){
+  for(const name of [...new Set(data.map(r=>r[key]))].sort())el(key).add(new Option(name,name));
+  el(key).onchange=render;
+}
+function summarize(rows){
+  return rows.reduce((t,r)=>({orders:t.orders+r.orders,late:t.late+r.late,days:t.days+r.excess_days}),{orders:0,late:0,days:0});
+}
+function values(t){return [t.orders.toLocaleString('en-IN'),t.late.toLocaleString('en-IN'),t.orders?(100*t.late/t.orders).toFixed(1)+'%':'—',t.late?(t.days/t.late).toFixed(1):'—'];}
+function render(){
+  const rows=data.filter(r=>['state','mode'].every(k=>!el(k).value||r[k]===el(k).value));
+  const titles=['Eligible orders','Late orders','Late rate','Avg. days late'];
+  el('metrics').innerHTML=values(summarize(rows)).map((v,i)=>'<div>'+titles[i]+'<strong>'+v+'</strong></div>').join('');
+  const groups=[...new Set(rows.map(r=>r.state))].map(s=>[s,summarize(rows.filter(r=>r.state===s))]).sort((a,b)=>b[1].late-a[1].late);
+  el('body').innerHTML=groups.map(([s,t])=>'<tr>'+[s,...values(t)].map(v=>'<td>'+v+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="5">No matching orders</td></tr>';
+}
+render();
+</script></html>
